@@ -10,7 +10,11 @@ namespace EventCallbacks
         // Use this for initialization
         void Start()
         {
-            EventSystem.Current.RegisterListener<UnitDeathEventInfo>(OnUnitDied);
+            UnitDeathEvent.RegisterListener(OnUnitDied);
+        }
+
+        void OnDestroy() {
+            UnitDeathEvent.UnregisterListener(OnUnitDied);
         }
 
         // Update is called once per frame
@@ -19,9 +23,9 @@ namespace EventCallbacks
 
         }
 
-        void OnUnitDied(UnitDeathEventInfo unitDeathInfo)
+        void OnUnitDied(UnitDeathEvent unitDeath)
         {
-            Debug.Log("Alerted about unit death: " + unitDeathInfo.UnitGO.name);
+            Debug.Log("Alerted about unit death: " + unitDeath.UnitGO.name);
         }
     }
 }
