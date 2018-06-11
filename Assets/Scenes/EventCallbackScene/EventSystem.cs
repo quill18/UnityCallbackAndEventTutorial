@@ -1,75 +1,78 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace EventCallbacks
 {
-    public class EventSystem : MonoBehaviour
+    public class EventSystem
     {
+        private static Dictionary<Type, EventSystem> _systems = new Dictionary<Type, EventSystem>();
 
-        // Use this for initialization
-        void OnEnable()
+        public static void Register<T>(Action<T> listener) where T : EventInfo
         {
-            __Current = this;
-        }
-
-        static private EventSystem __Current;
-        static public EventSystem Current
-        {
-            get
+            Type eventType = typeof(T);
+            if (_systems == null)
             {
-                if(__Current == null)
-                {
-                    __Current = GameObject.FindObjectOfType<EventSystem>();
-                }
-
-                return __Current;
-            }
-        }
-
-        delegate void EventListener(EventInfo ei);
-        Dictionary<System.Type, List<EventListener>> eventListeners;
-
-        public void RegisterListener<T>(System.Action<T> listener) where T : EventInfo
-        {
-            System.Type eventType = typeof(T);
-            if (eventListeners == null)
-            {
-                eventListeners = new Dictionary<System.Type, List<EventListener>>();
+                _systems = new Dictionary<Type, EventSystem>();
             }
 
-            if(eventListeners.ContainsKey(eventType) == false || eventListeners[eventType] == null)
+            if (!_systems.ContainsKey(eventType) || _systems[eventType] == null)
             {
-                eventListeners[eventType] = new List<EventListener>();
+                _systems[eventType] = new EventSystem<T>();
             }
 
-            // Wrap a type converstion around the event listener
-            // I'm betting someone better at C# generic syntax
-            // can find a way around this.
-            EventListener wrapper = (ei) => { listener((T)ei); };
-
-            eventListeners[eventType].Add(wrapper);
+          ((EventSystem<T>)_systems[eventType]).RegisterListener(listener);
         }
 
-        public void UnregisterListener<T>(System.Action<T> listener) where T : EventInfo
+        public static void FireEvent<T>(T eventInfo) where T : EventInfo
         {
-            // TODO
-        }
-
-        public void FireEvent(EventInfo eventInfo)
-        {
-            System.Type trueEventInfoClass = eventInfo.GetType();
-            if (eventListeners == null || eventListeners[trueEventInfoClass] == null)
+            Type eventType = typeof(T);
+            if (_systems?[eventType] == null)
             {
                 // No one is listening, we are done.
                 return;
             }
 
-            foreach(EventListener el in eventListeners[trueEventInfoClass])
+          ((EventSystem<T>)_systems[eventType]).FireEvent(eventInfo);
+        }
+    }
+
+    public class EventSystem<T> : EventSystem where T : EventInfo
+    {
+        private Dictionary<Type, Action<T>> _eventListeners;
+
+        public void RegisterListener(Action<T> listener)
+        {
+            // Can't ever be null as it's initialised with class
+            if (_eventListeners == null)
             {
-                el( eventInfo );
+                _eventListeners = new Dictionary<Type, Action<T>>();
             }
+
+            Type eventType = typeof(T);
+
+            if (!_eventListeners.ContainsKey(eventType))
+                _eventListeners[eventType] = listener;
+            else
+                _eventListeners[eventType] += listener;
         }
 
+        public void UnregisterListener(Action<T> listener)
+        {
+            // TODO
+        }
+
+        public void FireEvent(T eventInfo)
+        {
+            Type trueEventInfoClass = typeof(T);
+            if (_eventListeners?[trueEventInfoClass] == null)
+            {
+                // No one is listening, we are done.
+                return;
+            }
+
+            _eventListeners[trueEventInfoClass]?.Invoke(eventInfo);
+        }
     }
 }

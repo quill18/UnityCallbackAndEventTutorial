@@ -30,9 +30,7 @@ namespace EventCallbacks
             udei.EventDescription = "Unit "+ gameObject.name +" has died.";
             udei.UnitGO = gameObject;
 
-            EventSystem.Current.FireEvent(
-                udei
-                );
+            EventSystem.FireEvent(udei);
 
             Destroy(gameObject);
         }
