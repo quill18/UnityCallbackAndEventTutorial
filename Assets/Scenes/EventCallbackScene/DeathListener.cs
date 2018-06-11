@@ -10,7 +10,7 @@ namespace EventCallbacks
         // Use this for initialization
         void Start()
         {
-            EventSystem.Current.RegisterListener<UnitDeathEventInfo>(OnUnitDied);
+            EventSystem.Register<UnitDeathEventInfo>(OnUnitDied);
         }
 
         // Update is called once per frame
