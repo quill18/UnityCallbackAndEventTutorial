@@ -10,16 +10,17 @@ namespace EventCallbacks
         // Use this for initialization
         void Start()
         {
-            EventSystem.Current.RegisterListener<UnitDeathEventInfo>(OnUnitDied);
+            // subscribe fully generic to an event
+            EventSystem<UnitDeathEvent>.EventTriggered += OnUnitDied;
         }
 
         // Update is called once per frame
         void Update()
         {
-
+            
         }
 
-        void OnUnitDied(UnitDeathEventInfo unitDeathInfo)
+        void OnUnitDied(UnitDeathEvent unitDeathInfo)
         {
             Debug.Log("Alerted about unit death: " + unitDeathInfo.UnitGO.name);
         }

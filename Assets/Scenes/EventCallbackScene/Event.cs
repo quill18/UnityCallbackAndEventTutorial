@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace EventCallbacks
 {
-    public abstract class EventInfo
+    public abstract class Event
     {
         /*
-         * The base EventInfo,
+         * The base Event,
          * might have some generic text
          * for doing Debug.Log?
          */
@@ -15,12 +15,12 @@ namespace EventCallbacks
         public string EventDescription;
     }
 
-    public class DebugEventInfo : EventInfo
+    public class DebugEvent : Event
     {
         public int VerbosityLevel;
     }
 
-    public class UnitDeathEventInfo : EventInfo
+    public class UnitDeathEvent : Event
     {
         public GameObject UnitGO;
         /*

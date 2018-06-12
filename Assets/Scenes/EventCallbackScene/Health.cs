@@ -26,13 +26,12 @@ namespace EventCallbacks
         {
             // I am dying for some reason.
 
-            UnitDeathEventInfo udei = new UnitDeathEventInfo();
-            udei.EventDescription = "Unit "+ gameObject.name +" has died.";
-            udei.UnitGO = gameObject;
+            UnitDeathEvent ude = new UnitDeathEvent();
+            ude.EventDescription = "Unit "+ gameObject.name +" has died.";
+            ude.UnitGO = gameObject;
 
-            EventSystem.Current.FireEvent(
-                udei
-                );
+            // fire the event like so:
+            EventSystem<UnitDeathEvent>.FireEvent(ude);
 
             Destroy(gameObject);
         }
