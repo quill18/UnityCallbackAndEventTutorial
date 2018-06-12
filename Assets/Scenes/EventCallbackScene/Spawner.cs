@@ -28,5 +28,11 @@ namespace EventCallbacks
         {
             GameObject go = Instantiate(UnitPrefab);
         }
+
+        void OnDestroy()
+        {
+            // TODO: cleanup the event systems
+            //EventSystemManagement.CleanupEventSystem();
+        }
     }
 }

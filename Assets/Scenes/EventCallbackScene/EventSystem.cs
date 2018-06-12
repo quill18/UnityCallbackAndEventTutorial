@@ -1,75 +1,112 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace EventCallbacks
 {
-    public class EventSystem : MonoBehaviour
+    public abstract class EventSystem
     {
+        public abstract void CleanEventSystem();
+    }
 
-        // Use this for initialization
-        void OnEnable()
-        {
-            __Current = this;
-        }
+    /// <summary>
+    /// The actual generic eventsystem
+    /// </summary>
+    /// <typeparam name="T">The type of the event for this system</typeparam>
+    public class EventSystem<T> : EventSystem
+    {
+        static EventSystem<T> eventSystemInstance;
+        Action<T> eventDelegate;
 
-        static private EventSystem __Current;
-        static public EventSystem Current
+        public static event Action<T> EventTriggered
         {
-            get
+            add
             {
-                if(__Current == null)
+                if (EventSystemInstance.eventDelegate == null)
                 {
-                    __Current = GameObject.FindObjectOfType<EventSystem>();
+                    EventSystemManagement.RegisterNewEventSystem(EventSystemInstance);
                 }
 
-                return __Current;
+                EventSystemInstance.eventDelegate += value;
             }
+
+            remove { EventSystemInstance.eventDelegate -= value; }
         }
 
-        delegate void EventListener(EventInfo ei);
-        Dictionary<System.Type, List<EventListener>> eventListeners;
-
-        public void RegisterListener<T>(System.Action<T> listener) where T : EventInfo
+        public static void FireEvent(T eventData)
         {
-            System.Type eventType = typeof(T);
-            if (eventListeners == null)
-            {
-                eventListeners = new Dictionary<System.Type, List<EventListener>>();
-            }
-
-            if(eventListeners.ContainsKey(eventType) == false || eventListeners[eventType] == null)
-            {
-                eventListeners[eventType] = new List<EventListener>();
-            }
-
-            // Wrap a type converstion around the event listener
-            // I'm betting someone better at C# generic syntax
-            // can find a way around this.
-            EventListener wrapper = (ei) => { listener((T)ei); };
-
-            eventListeners[eventType].Add(wrapper);
+            EventSystemInstance.FireEvent_(eventData);
         }
 
-        public void UnregisterListener<T>(System.Action<T> listener) where T : EventInfo
+        static void CleanCurrentEventSystem()
         {
-            // TODO
+            if (eventSystemInstance != null)
+            {
+                eventSystemInstance.CleanSubscribersList();
+                // we set our instance to null, so we can check whether we have to create a new instance next time
+                eventSystemInstance = null;
+            }
         }
 
-        public void FireEvent(EventInfo eventInfo)
+        static EventSystem<T> EventSystemInstance
         {
-            System.Type trueEventInfoClass = eventInfo.GetType();
-            if (eventListeners == null || eventListeners[trueEventInfoClass] == null)
-            {
-                // No one is listening, we are done.
-                return;
-            }
+            get { return eventSystemInstance ?? (eventSystemInstance = new EventSystem<T>()); }
+        }
 
-            foreach(EventListener el in eventListeners[trueEventInfoClass])
+        public override void CleanEventSystem()
+        {
+            // notice that we call a static method here
+            CleanCurrentEventSystem();
+        }
+
+        void CleanSubscribersList()
+        {
+            eventDelegate = null;
+        }
+
+        void FireEvent_(T eventData)
+        {
+            if (eventDelegate != null)
             {
-                el( eventInfo );
+                eventDelegate(eventData);
             }
         }
 
+        EventSystem()
+        {
+        }
+    }
+
+    /// <summary>
+    /// a management class used to cleanup every used event system
+    /// </summary>
+    public static class EventSystemManagement
+    {
+        static readonly List<EventSystem> eventSystems = new List<EventSystem>();
+
+        /// <summary>
+        /// Registers a new event system instance
+        /// </summary>
+        /// <param name="eventSystem">The event system instance to register</param>
+        public static void RegisterNewEventSystem(EventSystem eventSystem)
+        {
+            if (!eventSystems.Contains(eventSystem))
+            {
+                eventSystems.Add(eventSystem);
+            }
+        }
+
+        /// <summary>
+        /// removes the listeners of all registered event system instances and
+        /// clears the list of registered event systems
+        /// </summary>
+        public static void CleanupEventSystem()
+        {
+            foreach (var eventSystem in eventSystems)
+            {
+                eventSystem.CleanEventSystem();
+            }
+
+            eventSystems.Clear();
+        }
     }
 }
