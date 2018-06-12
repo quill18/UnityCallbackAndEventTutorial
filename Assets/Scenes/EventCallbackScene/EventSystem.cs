@@ -27,28 +27,28 @@ namespace EventCallbacks
             }
         }
 
-        delegate void EventListener(EventInfo ei);
-        Dictionary<System.Type, List<EventListener>> eventListeners;
+        Dictionary<System.Type, dynamic> eventListeners;
 
         public void RegisterListener<T>(System.Action<T> listener) where T : EventInfo
         {
             System.Type eventType = typeof(T);
             if (eventListeners == null)
             {
-                eventListeners = new Dictionary<System.Type, List<EventListener>>();
+                eventListeners = new Dictionary<System.Type, dynamic>();
             }
 
             if(eventListeners.ContainsKey(eventType) == false || eventListeners[eventType] == null)
             {
-                eventListeners[eventType] = new List<EventListener>();
+                eventListeners[eventType] = new List<System.Action<T>>();
             }
 
             // Wrap a type converstion around the event listener
             // I'm betting someone better at C# generic syntax
             // can find a way around this.
-            EventListener wrapper = (ei) => { listener((T)ei); };
+            //EventListener wrapper = (ei) => { listener((T)ei); };
 
-            eventListeners[eventType].Add(wrapper);
+            //eventListeners[eventType].Add(wrapper);
+            eventListeners[eventType].Add(listener);
         }
 
         public void UnregisterListener<T>(System.Action<T> listener) where T : EventInfo
@@ -56,16 +56,16 @@ namespace EventCallbacks
             // TODO
         }
 
-        public void FireEvent(EventInfo eventInfo)
+        public void FireEvent<T>(T eventInfo) where T : EventInfo
         {
-            System.Type trueEventInfoClass = eventInfo.GetType();
+            System.Type trueEventInfoClass = typeof(T);
             if (eventListeners == null || eventListeners[trueEventInfoClass] == null)
             {
                 // No one is listening, we are done.
                 return;
             }
 
-            foreach(EventListener el in eventListeners[trueEventInfoClass])
+            foreach(System.Action<T> el in eventListeners[trueEventInfoClass])
             {
                 el( eventInfo );
             }
