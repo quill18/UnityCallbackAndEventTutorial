@@ -4,12 +4,6 @@ using UnityEngine;
 
 namespace EventCallbacks
 {
-    public class Handler
-    {
-        public object Target { get; set; }
-        public System.Reflection.MethodInfo Method { get; set; }
-    }
-
     public class EventSystem : MonoBehaviour
     {
         // Use this for initialization
@@ -73,6 +67,12 @@ namespace EventCallbacks
             {
                 el.Method.Invoke(el.Target, new[] { eventInfo });
             }
+        }
+        
+        public class Handler
+        {
+            public object Target { get; set; }
+            public System.Reflection.MethodInfo Method { get; set; }
         }
     }
 }
