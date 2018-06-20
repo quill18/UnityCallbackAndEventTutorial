@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +6,6 @@ namespace EventCallbacks
 {
     public class EventSystem : MonoBehaviour
     {
-
         // Use this for initialization
         void OnEnable()
         {
@@ -28,48 +27,52 @@ namespace EventCallbacks
         }
 
         delegate void EventListener(EventInfo ei);
-        Dictionary<System.Type, List<EventListener>> eventListeners;
+        Dictionary<Type, List<Handler>> eventListeners;
 
-        public void RegisterListener<T>(System.Action<T> listener) where T : EventInfo
+        public void RegisterListener<T>(Action<T> listener) where T : EventInfo
         {
-            System.Type eventType = typeof(T);
+            var target = listener.Target;
+            var method = listener.Method;
+
+            Type eventType = typeof(T);
             if (eventListeners == null)
             {
-                eventListeners = new Dictionary<System.Type, List<EventListener>>();
+                eventListeners = new Dictionary<Type, List<Handler>>();
             }
 
-            if(eventListeners.ContainsKey(eventType) == false || eventListeners[eventType] == null)
+            if (eventListeners.ContainsKey(eventType) == false || eventListeners[eventType] == null)
             {
-                eventListeners[eventType] = new List<EventListener>();
+                eventListeners[eventType] = new List<Handler>();
             }
 
-            // Wrap a type converstion around the event listener
-            // I'm betting someone better at C# generic syntax
-            // can find a way around this.
-            EventListener wrapper = (ei) => { listener((T)ei); };
-
-            eventListeners[eventType].Add(wrapper);
+            eventListeners[eventType].Add(new Handler { Target = target, Method = method });
         }
 
-        public void UnregisterListener<T>(System.Action<T> listener) where T : EventInfo
+        public void UnregisterListener<T>(Action<T> listener) where T : EventInfo
         {
-            // TODO
+            var eventType = typeof(T);
+            eventListeners[eventType].RemoveAll(l => l.Target == listener.Target && l.Method == listener.Method);
         }
 
         public void FireEvent(EventInfo eventInfo)
         {
-            System.Type trueEventInfoClass = eventInfo.GetType();
+            Type trueEventInfoClass = eventInfo.GetType();
             if (eventListeners == null || eventListeners[trueEventInfoClass] == null)
             {
                 // No one is listening, we are done.
                 return;
             }
 
-            foreach(EventListener el in eventListeners[trueEventInfoClass])
+            foreach (Handler el in eventListeners[trueEventInfoClass])
             {
-                el( eventInfo );
+                el.Method.Invoke(el.Target, new[] { eventInfo });
             }
         }
-
+        
+        public class Handler
+        {
+            public object Target { get; set; }
+            public System.Reflection.MethodInfo Method { get; set; }
+        }
     }
 }
