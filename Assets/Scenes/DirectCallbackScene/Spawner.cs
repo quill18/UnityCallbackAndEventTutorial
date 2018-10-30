@@ -6,17 +6,15 @@ namespace DirectCallbacks
 {
     public class Spawner : MonoBehaviour
     {
-
-        // Use this for initialization
-        void Start()
-        {
-
-        }
-
-        public GameObject UnitPrefab;
+        public GameObject unitPrefab;
 
         public delegate void OnUnitSpawnedDelegate(Health health);
         public event OnUnitSpawnedDelegate OnUnitSpawnedListeners;
+
+        void Awake()
+        {
+            unitPrefab = (GameObject)Instantiate(Resources.Load("Prefab/Unit_Direct"));
+        }
 
         // Update is called once per frame
         void Update()
@@ -29,9 +27,9 @@ namespace DirectCallbacks
 
         void SpawnUnit()
         {
-            GameObject go = Instantiate(UnitPrefab);
             if(OnUnitSpawnedListeners != null)
             {
+                GameObject go = Instantiate(unitPrefab);
                 OnUnitSpawnedListeners(go.GetComponent<Health>());
             }
         }
